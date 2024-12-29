@@ -4,9 +4,10 @@ import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, X, Calculator } from "lucide-react";
+import { Plus, X, Calculator as CalculatorIcon } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import CalculatorDialog from "./CalculatorDialog";
 
 interface GoalFormProps {
   goalText: string;
@@ -15,58 +16,6 @@ interface GoalFormProps {
   setEndDate: (date: string) => void;
   onClose: () => void;
 }
-
-const Calculator = () => {
-  const [display, setDisplay] = useState("");
-  const [result, setResult] = useState("");
-
-  const handleCalculate = () => {
-    try {
-      setResult(eval(display).toString());
-    } catch (error) {
-      setResult("Error");
-    }
-  };
-
-  const buttons = [
-    "7", "8", "9", "/",
-    "4", "5", "6", "*",
-    "1", "2", "3", "-",
-    "0", ".", "=", "+"
-  ];
-
-  return (
-    <div className="p-4">
-      <div className="mb-4">
-        <input
-          type="text"
-          value={display}
-          onChange={(e) => setDisplay(e.target.value)}
-          className="w-full p-2 border rounded mb-2"
-          placeholder="0"
-        />
-        <div className="text-right text-lg font-bold">{result}</div>
-      </div>
-      <div className="grid grid-cols-4 gap-2">
-        {buttons.map((btn) => (
-          <button
-            key={btn}
-            onClick={() => {
-              if (btn === "=") {
-                handleCalculate();
-              } else {
-                setDisplay(display + btn);
-              }
-            }}
-            className="p-2 bg-[#F2FCE2] hover:bg-[#E5DEFF] rounded"
-          >
-            {btn}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalFormProps) => {
   const { toast } = useToast();
@@ -159,14 +108,16 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" size="icon" className="bg-[#D3E4FD] hover:bg-[#E5DEFF]">
-              <Calculator className="h-4 w-4" />
+              <span className="h-4 w-4">
+                <CalculatorIcon />
+              </span>
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Calculator</DialogTitle>
             </DialogHeader>
-            <Calculator />
+            <CalculatorDialog />
           </DialogContent>
         </Dialog>
       </div>
