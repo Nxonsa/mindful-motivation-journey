@@ -21,18 +21,24 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
     
     try {
       console.log("Creating goal without authentication for development");
-      const { error } = await supabase.from("goals").insert({
+      const { data, error } = await supabase.from("goals").insert({
         goal_text: goalText,
         end_date: new Date(endDate).toISOString(),
         // For development, we're using a fixed user_id
         user_id: "00000000-0000-0000-0000-000000000000"
-      });
+      }).select();
 
       if (error) {
         console.error("Error creating goal:", error);
-        throw error;
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create goal. Please try again.",
+          variant: "destructive",
+        });
+        return;
       }
 
+      console.log("Goal created successfully:", data);
       toast({
         title: "Goal Created",
         description: "Your goal has been successfully set!",
