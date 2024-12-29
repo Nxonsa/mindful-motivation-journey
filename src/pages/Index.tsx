@@ -4,12 +4,62 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import TaskCard from "@/components/TaskCard";
 import GoalForm from "@/components/GoalForm";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [goalText, setGoalText] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  // Fetch goals data
+  const { data: goals } = useQuery({
+    queryKey: ['goals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('goals')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching goals:', error);
+        throw error;
+      }
+      
+      return data || [];
+    }
+  });
+
+  // Calculate statistics
+  const calculateStats = () => {
+    if (!goals) return { daysActive: 0, tasksCompletion: 0, achievements: 0 };
+
+    const today = new Date();
+    const startOfToday = new Date(today.setHours(0, 0, 0, 0));
+    
+    // Count days with active goals
+    const uniqueDays = new Set(
+      goals.map(goal => new Date(goal.created_at).toDateString())
+    );
+    
+    // Calculate task completion percentage
+    const completedGoals = goals.filter(goal => goal.completed).length;
+    const totalGoals = goals.length;
+    const completionPercentage = totalGoals > 0 
+      ? Math.round((completedGoals / totalGoals) * 100)
+      : 0;
+
+    // Count achievements (completed goals)
+    const achievements = completedGoals;
+
+    return {
+      daysActive: uniqueDays.size,
+      tasksCompletion: completionPercentage,
+      achievements
+    };
+  };
+
+  const stats = calculateStats();
 
   const tasks = [
     {
@@ -47,15 +97,15 @@ const Index = () => {
           <h2 className="text-xl font-semibold mb-4">Today's Progress</h2>
           <div className="flex justify-between items-center">
             <div className="text-center">
-              <p className="text-2xl font-bold text-primary">7</p>
+              <p className="text-2xl font-bold text-primary">{stats.daysActive}</p>
               <p className="text-sm text-muted-foreground">Days Active</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-primary">85%</p>
+              <p className="text-2xl font-bold text-primary">{stats.tasksCompletion}%</p>
               <p className="text-sm text-muted-foreground">Tasks Done</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-primary">3</p>
+              <p className="text-2xl font-bold text-primary">{stats.achievements}</p>
               <p className="text-sm text-muted-foreground">Achievements</p>
             </div>
           </div>
