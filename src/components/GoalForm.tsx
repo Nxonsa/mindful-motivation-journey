@@ -20,13 +20,17 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
     e.preventDefault();
     
     try {
-      console.log("Creating goal without authentication for development");
-      const { data, error } = await supabase.from("goals").insert({
-        goal_text: goalText,
-        end_date: new Date(endDate).toISOString(),
-        // For development, we're using a fixed user_id
-        user_id: "00000000-0000-0000-0000-000000000000"
-      }).select();
+      console.log("Creating goal with text:", goalText, "and end date:", endDate);
+      
+      const { data, error } = await supabase
+        .from("goals")
+        .insert({
+          goal_text: goalText,
+          end_date: new Date(endDate).toISOString(),
+          // For development, we're using a fixed user_id
+          user_id: "00000000-0000-0000-0000-000000000000"
+        })
+        .select();
 
       if (error) {
         console.error("Error creating goal:", error);
@@ -48,10 +52,10 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
       setGoalText("");
       setEndDate("");
     } catch (error) {
-      console.error("Error creating goal:", error);
+      console.error("Unexpected error creating goal:", error);
       toast({
         title: "Error",
-        description: "Failed to create goal. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     }
