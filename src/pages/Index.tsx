@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Target, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -14,6 +16,24 @@ const Index = () => {
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [goalText, setGoalText] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      console.log("Auth state changed:", session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const tasks = [
     {
@@ -39,16 +59,30 @@ const Index = () => {
     },
   ];
 
-  const handleSubmitGoal = async (e: React.FormEvent) => {
+  const handleSubmitGoal = async (e) => {
     e.preventDefault();
     
+    if (!session?.user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to create goals",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      console.log("Creating goal with user_id:", session.user.id);
       const { error } = await supabase.from("goals").insert({
         goal_text: goalText,
         end_date: new Date(endDate).toISOString(),
+        user_id: session.user.id,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating goal:", error);
+        throw error;
+      }
 
       toast({
         title: "Goal Created",
@@ -67,6 +101,20 @@ const Index = () => {
       });
     }
   };
+
+  if (!session) {
+    return (
+      <div className="max-w-md mx-auto mt-8 p-4">
+        <h1 className="text-3xl font-bold text-primary mb-6">Welcome to Path to Progress</h1>
+        <p className="mb-6 text-muted-foreground">Please sign in to start tracking your goals</p>
+        <Auth 
+          supabaseClient={supabase}
+          appearance={{ theme: ThemeSupa }}
+          theme="light"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 animate-fade-in">
