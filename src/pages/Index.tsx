@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Calendar, Target, Award } from "lucide-react";
+import { Calendar, Target, Award, Heart } from "lucide-react";
 
 const Index = () => {
   const tasks = [
@@ -27,7 +27,7 @@ const Index = () => {
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8 animate-fade-in">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-text mb-2">Welcome Back</h1>
+        <h1 className="text-3xl font-bold text-text mb-2">Welcome to GoalGuard</h1>
         <p className="text-text-light">Your journey to wellness continues</p>
       </header>
 
@@ -51,7 +51,7 @@ const Index = () => {
         </div>
       </section>
 
-      <section>
+      <section className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Today's Tasks</h2>
         <div className="space-y-4">
           {tasks.map((task, index) => (
@@ -90,6 +90,13 @@ const Index = () => {
           ))}
         </div>
       </section>
+
+      <footer className="mt-12 text-center text-sm text-gray-500">
+        <div className="flex items-center justify-center space-x-2">
+          <Heart className="w-4 h-4 text-red-500" />
+          <p>Created by Media Owl</p>
+        </div>
+      </footer>
     </div>
   );
 };

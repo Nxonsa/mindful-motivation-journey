@@ -36,8 +36,8 @@ const Training = () => {
     setActiveTask(null);
     toast({
       title: "Exercise Completed",
-      description: "Great job! Keep up the good work.",
-      variant: "success",
+      description: "Great job! Keep up the good work!",
+      variant: "default",
     });
   };
 
