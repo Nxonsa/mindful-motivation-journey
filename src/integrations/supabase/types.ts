@@ -13,9 +13,11 @@ export type Database = {
         Row: {
           completed: boolean | null
           created_at: string | null
+          daily_tasks: string[] | null
           end_date: string
           goal_text: string
           id: string
+          resource_links: string[] | null
           start_date: string | null
           updated_at: string | null
           user_id: string | null
@@ -23,9 +25,11 @@ export type Database = {
         Insert: {
           completed?: boolean | null
           created_at?: string | null
+          daily_tasks?: string[] | null
           end_date: string
           goal_text: string
           id?: string
+          resource_links?: string[] | null
           start_date?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -33,9 +37,11 @@ export type Database = {
         Update: {
           completed?: boolean | null
           created_at?: string | null
+          daily_tasks?: string[] | null
           end_date?: string
           goal_text?: string
           id?: string
+          resource_links?: string[] | null
           start_date?: string | null
           updated_at?: string | null
           user_id?: string | null
