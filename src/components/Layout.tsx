@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Activity, BarChart3, User } from "lucide-react";
+import { Home, Activity, BarChart3 } from "lucide-react";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -9,7 +9,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     { icon: Home, label: "Home", path: "/" },
     { icon: Activity, label: "Training", path: "/training" },
     { icon: BarChart3, label: "Progress", path: "/progress" },
-    { icon: User, label: "Profile", path: "/profile" },
   ];
 
   return (
