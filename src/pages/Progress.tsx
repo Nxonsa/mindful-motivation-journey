@@ -1,31 +1,84 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Trophy, Star, Target } from "lucide-react";
+import TaskCard from "@/components/TaskCard";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Progress = () => {
-  const achievements = [
-    {
-      title: "First Week Complete",
-      description: "Stayed committed for 7 days straight",
-      icon: Trophy,
-      date: "2024-03-15",
-      unlocked: true,
-    },
-    {
-      title: "Exercise Master",
-      description: "Completed 10 training sessions",
-      icon: Target,
-      date: "2024-03-10",
-      unlocked: true,
-    },
-    {
-      title: "Reflection Guru",
-      description: "Completed 30 daily reflections",
-      icon: Star,
-      date: null,
-      unlocked: false,
-    },
-  ];
+  const { toast } = useToast();
+
+  // Fetch goals data
+  const { data: goals, refetch } = useQuery({
+    queryKey: ['goals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('goals')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching goals:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch goals",
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      return data || [];
+    }
+  });
+
+  // Calculate statistics
+  const calculateStats = () => {
+    if (!goals) return { daysActive: 0, tasksCompletion: 0, achievements: 0 };
+
+    const uniqueDays = new Set(
+      goals.map(goal => new Date(goal.created_at).toDateString())
+    );
+    
+    const completedGoals = goals.filter(goal => goal.completed).length;
+    const totalGoals = goals.length;
+    const completionPercentage = totalGoals > 0 
+      ? Math.round((completedGoals / totalGoals) * 100)
+      : 0;
+
+    return {
+      daysActive: uniqueDays.size,
+      tasksCompletion: completionPercentage,
+      achievements: completedGoals
+    };
+  };
+
+  const stats = calculateStats();
+
+  const handleTaskAction = async (goalId: string, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('goals')
+        .update({ completed: !completed })
+        .eq('id', goalId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Task ${!completed ? "completed" : "restarted"}`,
+      });
+
+      refetch();
+    } catch (error) {
+      console.error('Error updating goal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8">
@@ -35,58 +88,42 @@ const Progress = () => {
       </header>
 
       <section className="mb-8">
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-8">
+        <div className="bg-card rounded-2xl p-6 shadow-sm mb-8">
           <h2 className="text-xl font-semibold mb-4">Statistics</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-3xl font-bold text-primary">7</p>
-              <p className="text-sm text-gray-600">Days Clean</p>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-secondary/10 rounded-lg p-4">
+              <p className="text-3xl font-bold text-primary">{stats.daysActive}</p>
+              <p className="text-sm text-muted-foreground">Days Active</p>
             </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-3xl font-bold text-primary">5</p>
-              <p className="text-sm text-gray-600">Achievements</p>
+            <div className="bg-secondary/10 rounded-lg p-4">
+              <p className="text-3xl font-bold text-primary">{stats.tasksCompletion}%</p>
+              <p className="text-sm text-muted-foreground">Tasks Done</p>
+            </div>
+            <div className="bg-secondary/10 rounded-lg p-4">
+              <p className="text-3xl font-bold text-primary">{stats.achievements}</p>
+              <p className="text-sm text-muted-foreground">Achievements</p>
             </div>
           </div>
         </div>
 
-        <h2 className="text-xl font-semibold mb-4">Achievements</h2>
+        <h2 className="text-xl font-semibold mb-4">Your Goals</h2>
         <div className="space-y-4">
-          {achievements.map((achievement, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className={`bg-white rounded-xl p-6 shadow-sm ${
-                !achievement.unlocked && "opacity-50"
-              }`}
-            >
-              <div className="flex items-start space-x-4">
-                <div
-                  className={`p-3 rounded-full ${
-                    achievement.unlocked ? "bg-primary/10" : "bg-gray-100"
-                  }`}
-                >
-                  <achievement.icon
-                    className={`w-6 h-6 ${
-                      achievement.unlocked ? "text-primary" : "text-gray-400"
-                    }`}
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-text">{achievement.title}</h3>
-                  <p className="text-sm text-gray-600">
-                    {achievement.description}
-                  </p>
-                  {achievement.date && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Unlocked: {achievement.date}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </motion.div>
+          {goals?.map((goal, index) => (
+            <TaskCard
+              key={goal.id}
+              title={goal.goal_text}
+              description={`Due: ${new Date(goal.end_date).toLocaleDateString()}`}
+              icon={goal.completed ? Trophy : Target}
+              completed={goal.completed}
+              action={() => handleTaskAction(goal.id, goal.completed)}
+              index={index}
+            />
           ))}
+          {!goals?.length && (
+            <p className="text-center text-muted-foreground py-8">
+              No goals yet. Start by adding some goals!
+            </p>
+          )}
         </div>
       </section>
     </div>

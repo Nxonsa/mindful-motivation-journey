@@ -23,11 +23,17 @@ const TaskCard = ({ title, description, icon: Icon, completed, action, index }: 
         <Icon className={`w-6 h-6 ${completed ? "text-primary" : "text-muted-foreground"}`} />
       </div>
       <div className="flex-1">
-        <h3 className="font-medium">{title}</h3>
+        <h3 className={`font-medium ${completed ? "line-through text-muted-foreground" : ""}`}>
+          {title}
+        </h3>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
-      <Button onClick={action} variant={completed ? "secondary" : "default"}>
-        {completed ? "Completed" : "Start"}
+      <Button 
+        onClick={action} 
+        variant={completed ? "secondary" : "default"}
+        className="min-w-[100px]"
+      >
+        {completed ? "Restart" : "Complete"}
       </Button>
     </motion.div>
   );
