@@ -8,6 +8,7 @@ import { Plus, X, Calculator as CalculatorIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import CalculatorDialog from "./CalculatorDialog";
+import { getRandomBibleQuote } from "@/utils/notifications";
 
 interface GoalFormProps {
   goalText: string;
@@ -68,9 +69,12 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
       }
 
       console.log("Goal created successfully:", data);
+      
+      // Show success message with Bible quote
+      const { quote, reference, message } = getRandomBibleQuote(true);
       toast({
-        title: "Goal Created",
-        description: "Your goal has been successfully set!",
+        title: message,
+        description: `"${quote}" - ${reference}`,
       });
       
       onClose();
@@ -78,9 +82,12 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
       setEndDate("");
     } catch (error) {
       console.error("Unexpected error creating goal:", error);
+      
+      // Show motivational Bible quote on failure
+      const { quote, reference, message } = getRandomBibleQuote(false);
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: message,
+        description: `"${quote}" - ${reference}`,
         variant: "destructive",
       });
     }

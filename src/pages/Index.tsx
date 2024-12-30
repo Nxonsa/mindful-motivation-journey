@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Calendar, Target, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,12 +6,17 @@ import TaskCard from "@/components/TaskCard";
 import GoalForm from "@/components/GoalForm";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { setupNotifications } from "@/utils/notifications";
 
 const Index = () => {
   const navigate = useNavigate();
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [goalText, setGoalText] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  useEffect(() => {
+    setupNotifications();
+  }, []);
 
   // Fetch goals data
   const { data: goals } = useQuery({
