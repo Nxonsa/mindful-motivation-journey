@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, X, Calculator as CalculatorIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import CalculatorDialog from "./CalculatorDialog";
 
@@ -21,9 +21,27 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
   const { toast } = useToast();
   const [dailyTasks, setDailyTasks] = useState<string[]>([""]);
   const [resourceLinks, setResourceLinks] = useState<string[]>([""]);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id || null);
+    };
+    getUser();
+  }, []);
 
   const handleSubmitGoal = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a goal",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       console.log("Creating goal with text:", goalText, "and end date:", endDate);
@@ -35,7 +53,7 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
           end_date: new Date(endDate).toISOString(),
           daily_tasks: dailyTasks.filter(task => task.trim() !== ""),
           resource_links: resourceLinks.filter(link => link.trim() !== ""),
-          user_id: "00000000-0000-0000-0000-000000000000"
+          user_id: userId
         })
         .select();
 
