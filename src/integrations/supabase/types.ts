@@ -51,30 +51,30 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          experience_points: number | null
           id: string
-          updated_at: string
+          level: number | null
           temp_code: string | null
           temp_code_expires_at: string | null
-          level: number
-          experience_points: number
+          updated_at: string
         }
         Insert: {
           created_at?: string
+          experience_points?: number | null
           id: string
-          updated_at?: string
+          level?: number | null
           temp_code?: string | null
           temp_code_expires_at?: string | null
-          level?: number
-          experience_points?: number
+          updated_at?: string
         }
         Update: {
           created_at?: string
+          experience_points?: number | null
           id?: string
-          updated_at?: string
+          level?: number | null
           temp_code?: string | null
           temp_code_expires_at?: string | null
-          level?: number
-          experience_points?: number
+          updated_at?: string
         }
         Relationships: []
       }
