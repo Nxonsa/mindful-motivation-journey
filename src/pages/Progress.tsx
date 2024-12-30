@@ -83,7 +83,7 @@ const Progress = () => {
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8">
       <header className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">Your Progress</h1>
+        <h1 className="text-2xl font-bold mb-2">Daily Tasks to Achieve Goal</h1>
         <p className="text-gray-600">Track your journey and achievements</p>
       </header>
 
@@ -106,25 +106,29 @@ const Progress = () => {
           </div>
         </div>
 
-        <h2 className="text-xl font-semibold mb-4">Your Goals</h2>
-        <div className="space-y-4">
-          {goals?.map((goal, index) => (
-            <TaskCard
-              key={goal.id}
-              title={goal.goal_text}
-              description={`Due: ${new Date(goal.end_date).toLocaleDateString()}`}
-              icon={goal.completed ? Trophy : Target}
-              completed={goal.completed}
-              action={() => handleTaskAction(goal.id, goal.completed)}
-              index={index}
-            />
-          ))}
-          {!goals?.length && (
-            <p className="text-center text-muted-foreground py-8">
-              No goals yet. Start by adding some goals!
-            </p>
-          )}
-        </div>
+        {goals?.map((goal, index) => (
+          <div key={goal.id} className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">{goal.goal_text}</h2>
+            <div className="space-y-4">
+              {goal.daily_tasks?.map((task, taskIndex) => (
+                <TaskCard
+                  key={`${goal.id}-${taskIndex}`}
+                  title={task}
+                  description={`Part of goal: ${goal.goal_text}`}
+                  icon={goal.completed ? Trophy : Target}
+                  completed={goal.completed}
+                  action={() => handleTaskAction(goal.id, goal.completed)}
+                  index={taskIndex}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+        {!goals?.length && (
+          <p className="text-center text-muted-foreground py-8">
+            No goals yet. Start by adding some goals!
+          </p>
+        )}
       </section>
     </div>
   );
