@@ -4,11 +4,31 @@ import { Play, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import AnimatedProgressBar from "@/components/AnimatedProgressBar";
+import { useAuth } from "@/components/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const Training = () => {
+  const { userId } = useAuth();
   const [activeTask, setActiveTask] = useState<string | null>(null);
   const [dailyProgress, setDailyProgress] = useState(0);
   const [overallProgress, setOverallProgress] = useState(0);
+
+  // Fetch user's profile data
+  const { data: profile } = useQuery({
+    queryKey: ['profile', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId
+  });
 
   const exercises = [
     {
@@ -17,7 +37,8 @@ const Training = () => {
       description: "3km at your own pace",
       duration: "30 minutes",
       instructions: "Start slow and gradually increase your pace. Listen to your body.",
-      contribution: 50, // This exercise contributes 50% to daily progress
+      contribution: 50,
+      experiencePoints: 100
     },
     {
       id: "pushups",
@@ -25,7 +46,8 @@ const Training = () => {
       description: "5 push-ups",
       duration: "5 minutes",
       instructions: "Keep your core tight and back straight. Modify on knees if needed.",
-      contribution: 50, // This exercise contributes 50% to daily progress
+      contribution: 50,
+      experiencePoints: 50
     }
   ];
 
@@ -37,25 +59,51 @@ const Training = () => {
     });
   };
 
-  const handleCompleteExercise = (id: string, contribution: number) => {
+  const handleCompleteExercise = async (id: string, contribution: number, experiencePoints: number) => {
+    if (!userId) return;
+
     setActiveTask(null);
-    // Update daily progress
     setDailyProgress(prev => Math.min(100, prev + contribution));
-    // Update overall progress
-    setOverallProgress(prev => Math.min(100, prev + (contribution * 0.2))); // Overall progress increases slower
-    
-    toast({
-      title: "Exercise Completed",
-      description: "Great job! Keep up the good work!",
-      variant: "default",
-    });
+    setOverallProgress(prev => Math.min(100, prev + (contribution * 0.2)));
+
+    // Update user's experience points
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          experience_points: (profile?.experience_points || 0) + experiencePoints,
+          level: Math.floor(((profile?.experience_points || 0) + experiencePoints) / 1000) + 1
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Exercise Completed!",
+        description: `Gained ${experiencePoints} XP! Keep up the great work!`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error updating experience:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update progress",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Today's Training</h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Today's Training</h1>
+        {profile && (
+          <div className="mt-2 text-sm text-gray-600">
+            Level {profile.level} • {profile.experience_points} XP
+          </div>
+        )}
+      </div>
       
-      {/* Progress Bars */}
       <div className="space-y-6 mb-8">
         <AnimatedProgressBar
           progress={dailyProgress}
@@ -82,13 +130,14 @@ const Training = () => {
                 <h3 className="text-lg font-semibold">{exercise.title}</h3>
                 <p className="text-sm text-gray-600">{exercise.description}</p>
                 <p className="text-sm text-gray-500 mt-1">Duration: {exercise.duration}</p>
+                <p className="text-sm text-green-600">+{exercise.experiencePoints} XP</p>
               </div>
               <Button
                 variant={activeTask === exercise.id ? "secondary" : "default"}
                 size="sm"
                 onClick={() => 
                   activeTask === exercise.id 
-                    ? handleCompleteExercise(exercise.id, exercise.contribution)
+                    ? handleCompleteExercise(exercise.id, exercise.contribution, exercise.experiencePoints)
                     : handleStartExercise(exercise.id)
                 }
               >
