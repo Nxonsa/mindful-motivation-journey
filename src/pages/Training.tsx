@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Play, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import AnimatedProgressBar from "@/components/AnimatedProgressBar";
 
 const Training = () => {
-  const [activeTask, setActiveTask] = React.useState<string | null>(null);
+  const [activeTask, setActiveTask] = useState<string | null>(null);
+  const [dailyProgress, setDailyProgress] = useState(0);
+  const [overallProgress, setOverallProgress] = useState(0);
 
   const exercises = [
     {
@@ -14,6 +17,7 @@ const Training = () => {
       description: "3km at your own pace",
       duration: "30 minutes",
       instructions: "Start slow and gradually increase your pace. Listen to your body.",
+      contribution: 50, // This exercise contributes 50% to daily progress
     },
     {
       id: "pushups",
@@ -21,6 +25,7 @@ const Training = () => {
       description: "5 push-ups",
       duration: "5 minutes",
       instructions: "Keep your core tight and back straight. Modify on knees if needed.",
+      contribution: 50, // This exercise contributes 50% to daily progress
     }
   ];
 
@@ -32,8 +37,13 @@ const Training = () => {
     });
   };
 
-  const handleCompleteExercise = (id: string) => {
+  const handleCompleteExercise = (id: string, contribution: number) => {
     setActiveTask(null);
+    // Update daily progress
+    setDailyProgress(prev => Math.min(100, prev + contribution));
+    // Update overall progress
+    setOverallProgress(prev => Math.min(100, prev + (contribution * 0.2))); // Overall progress increases slower
+    
     toast({
       title: "Exercise Completed",
       description: "Great job! Keep up the good work!",
@@ -44,6 +54,21 @@ const Training = () => {
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Today's Training</h1>
+      
+      {/* Progress Bars */}
+      <div className="space-y-6 mb-8">
+        <AnimatedProgressBar
+          progress={dailyProgress}
+          title="Daily Training Progress"
+          color="bg-blue-500"
+        />
+        <AnimatedProgressBar
+          progress={overallProgress}
+          title="Overall Fitness Goals"
+          color="bg-green-500"
+        />
+      </div>
+
       <div className="space-y-4">
         {exercises.map((exercise) => (
           <motion.div
@@ -63,7 +88,7 @@ const Training = () => {
                 size="sm"
                 onClick={() => 
                   activeTask === exercise.id 
-                    ? handleCompleteExercise(exercise.id)
+                    ? handleCompleteExercise(exercise.id, exercise.contribution)
                     : handleStartExercise(exercise.id)
                 }
               >
