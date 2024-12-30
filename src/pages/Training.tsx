@@ -15,7 +15,7 @@ const Training = () => {
   const [overallProgress, setOverallProgress] = useState(0);
 
   // Fetch user's profile data
-  const { data: profile } = useQuery({
+  const { data: profile, refetch: refetchProfile } = useQuery({
     queryKey: ['profile', userId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -60,23 +60,28 @@ const Training = () => {
   };
 
   const handleCompleteExercise = async (id: string, contribution: number, experiencePoints: number) => {
-    if (!userId) return;
+    if (!userId || !profile) return;
 
     setActiveTask(null);
     setDailyProgress(prev => Math.min(100, prev + contribution));
     setOverallProgress(prev => Math.min(100, prev + (contribution * 0.2)));
 
-    // Update user's experience points
+    const newExperiencePoints = (profile.experience_points || 0) + experiencePoints;
+    const newLevel = Math.floor(newExperiencePoints / 1000) + 1;
+
     try {
       const { error } = await supabase
         .from('profiles')
         .update({
-          experience_points: (profile?.experience_points || 0) + experiencePoints,
-          level: Math.floor(((profile?.experience_points || 0) + experiencePoints) / 1000) + 1
+          experience_points: newExperiencePoints,
+          level: newLevel
         })
         .eq('id', userId);
 
       if (error) throw error;
+
+      // Refetch profile data to update UI
+      refetchProfile();
 
       toast({
         title: "Exercise Completed!",
@@ -99,7 +104,7 @@ const Training = () => {
         <h1 className="text-2xl font-bold">Today's Training</h1>
         {profile && (
           <div className="mt-2 text-sm text-gray-600">
-            Level {profile.level} • {profile.experience_points} XP
+            Level {profile.level || 1} • {profile.experience_points || 0} XP
           </div>
         )}
       </div>

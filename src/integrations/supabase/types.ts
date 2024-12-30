@@ -52,23 +52,29 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          updated_at: string
           temp_code: string | null
           temp_code_expires_at: string | null
-          updated_at: string
+          level: number
+          experience_points: number
         }
         Insert: {
           created_at?: string
           id: string
+          updated_at?: string
           temp_code?: string | null
           temp_code_expires_at?: string | null
-          updated_at?: string
+          level?: number
+          experience_points?: number
         }
         Update: {
           created_at?: string
           id?: string
+          updated_at?: string
           temp_code?: string | null
           temp_code_expires_at?: string | null
-          updated_at?: string
+          level?: number
+          experience_points?: number
         }
         Relationships: []
       }
