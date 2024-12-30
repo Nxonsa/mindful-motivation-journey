@@ -21,10 +21,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user?.id ?? null);
-      setIsLoading(false);
-    });
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session check error:', error);
+          toast({
+            title: "Session Error",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+        setUserId(session?.user?.id ?? null);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Session check failed:', err);
+        setIsLoading(false);
+      }
+    };
+
+    checkSession();
 
     // Listen for auth changes
     const {
@@ -85,14 +102,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           theme="light"
           providers={[]}
           redirectTo={window.location.origin}
-          onError={(error) => {
-            console.error('Auth error:', error);
-            toast({
-              title: "Authentication Error",
-              description: error.message,
-              variant: "destructive",
-            });
-          }}
         />
       </div>
     );
