@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   userId: string | null;
@@ -28,16 +29,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id ?? null);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
+      
+      if (event === 'SIGNED_IN') {
+        setUserId(session?.user?.id ?? null);
+        toast({
+          title: "Welcome!",
+          description: "You have successfully signed in.",
+        });
+        navigate('/');
+      } else if (event === 'SIGNED_OUT') {
+        setUserId(null);
+        toast({
+          title: "Signed out",
+          description: "You have been signed out successfully.",
+        });
+      } else if (event === 'PASSWORD_RECOVERY') {
+        toast({
+          title: "Password Reset",
+          description: "Check your email for the password reset link.",
+        });
+      } else if (event === 'USER_UPDATED') {
+        toast({
+          title: "Profile Updated",
+          description: "Your profile has been updated successfully.",
+        });
+      }
+      
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>;
   }
 
   if (!userId) {
@@ -46,9 +75,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         <h1 className="text-2xl font-bold mb-6 text-center">Welcome to Goal Tracker</h1>
         <Auth
           supabaseClient={supabase}
-          appearance={{ theme: ThemeSupa }}
+          appearance={{ 
+            theme: ThemeSupa,
+            style: {
+              button: { background: 'rgb(59 130 246)', color: 'white' },
+              anchor: { color: 'rgb(59 130 246)' },
+            }
+          }}
           theme="light"
           providers={[]}
+          redirectTo={window.location.origin}
+          onError={(error) => {
+            console.error('Auth error:', error);
+            toast({
+              title: "Authentication Error",
+              description: error.message,
+              variant: "destructive",
+            });
+          }}
         />
       </div>
     );
