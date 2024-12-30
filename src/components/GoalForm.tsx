@@ -4,11 +4,11 @@ import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, X, Calculator as CalculatorIcon } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import CalculatorDialog from "./CalculatorDialog";
 import { getRandomBibleQuote } from "@/utils/notifications";
+import GoalFormHeader from "./goal/GoalFormHeader";
+import DailyTasksSection from "./goal/DailyTasksSection";
+import ResourceLinksSection from "./goal/ResourceLinksSection";
 
 interface GoalFormProps {
   goalText: string;
@@ -45,8 +45,6 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
     }
     
     try {
-      console.log("Creating goal with text:", goalText, "and end date:", endDate);
-      
       const { data, error } = await supabase
         .from("goals")
         .insert({
@@ -58,19 +56,8 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
         })
         .select();
 
-      if (error) {
-        console.error("Error creating goal:", error);
-        toast({
-          title: "Error",
-          description: error.message || "Failed to create goal. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (error) throw error;
 
-      console.log("Goal created successfully:", data);
-      
-      // Show success message with Bible quote
       const { quote, reference, message } = getRandomBibleQuote(true);
       toast({
         title: message,
@@ -81,9 +68,7 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
       setGoalText("");
       setEndDate("");
     } catch (error) {
-      console.error("Unexpected error creating goal:", error);
-      
-      // Show motivational Bible quote on failure
+      console.error("Error creating goal:", error);
       const { quote, reference, message } = getRandomBibleQuote(false);
       toast({
         title: message,
@@ -93,30 +78,21 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
     }
   };
 
-  const addDailyTask = () => {
-    setDailyTasks([...dailyTasks, ""]);
-  };
-
-  const addResourceLink = () => {
-    setResourceLinks([...resourceLinks, ""]);
-  };
-
+  const addDailyTask = () => setDailyTasks([...dailyTasks, ""]);
+  const addResourceLink = () => setResourceLinks([...resourceLinks, ""]);
   const updateDailyTask = (index: number, value: string) => {
     const newTasks = [...dailyTasks];
     newTasks[index] = value;
     setDailyTasks(newTasks);
   };
-
   const updateResourceLink = (index: number, value: string) => {
     const newLinks = [...resourceLinks];
     newLinks[index] = value;
     setResourceLinks(newLinks);
   };
-
   const removeDailyTask = (index: number) => {
     setDailyTasks(dailyTasks.filter((_, i) => i !== index));
   };
-
   const removeResourceLink = (index: number) => {
     setResourceLinks(resourceLinks.filter((_, i) => i !== index));
   };
@@ -128,24 +104,7 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
       className="bg-card rounded-xl p-6 shadow-sm mb-8"
       onSubmit={handleSubmitGoal}
     >
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Set Your Goal</h3>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="icon" className="bg-[#D3E4FD] hover:bg-[#E5DEFF]">
-              <span className="h-4 w-4">
-                <CalculatorIcon />
-              </span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Calculator</DialogTitle>
-            </DialogHeader>
-            <CalculatorDialog />
-          </DialogContent>
-        </Dialog>
-      </div>
+      <GoalFormHeader />
       
       <div className="space-y-4">
         <div>
@@ -172,69 +131,19 @@ const GoalForm = ({ goalText, setGoalText, endDate, setEndDate, onClose }: GoalF
           />
         </div>
 
-        <div>
-          <Label>Daily Tasks to Achieve Goal</Label>
-          {dailyTasks.map((task, index) => (
-            <div key={index} className="flex gap-2 mt-2">
-              <Input
-                value={task}
-                onChange={(e) => updateDailyTask(index, e.target.value)}
-                placeholder="Enter a daily task"
-                className="bg-[#F2FCE2]"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => removeDailyTask(index)}
-                className="bg-[#FFDEE2] hover:bg-red-200"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            onClick={addDailyTask}
-            variant="outline"
-            size="sm"
-            className="mt-2 bg-[#F2FCE2] hover:bg-[#E5DEFF]"
-          >
-            <Plus className="h-4 w-4 mr-2" /> Add Daily Task
-          </Button>
-        </div>
+        <DailyTasksSection
+          dailyTasks={dailyTasks}
+          updateDailyTask={updateDailyTask}
+          removeDailyTask={removeDailyTask}
+          addDailyTask={addDailyTask}
+        />
 
-        <div>
-          <Label>Resource Links</Label>
-          {resourceLinks.map((link, index) => (
-            <div key={index} className="flex gap-2 mt-2">
-              <Input
-                value={link}
-                onChange={(e) => updateResourceLink(index, e.target.value)}
-                placeholder="Enter a resource link"
-                className="bg-[#E5DEFF]"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => removeResourceLink(index)}
-                className="bg-[#FFDEE2] hover:bg-red-200"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            onClick={addResourceLink}
-            variant="outline"
-            size="sm"
-            className="mt-2 bg-[#F2FCE2] hover:bg-[#E5DEFF]"
-          >
-            <Plus className="h-4 w-4 mr-2" /> Add Resource Link
-          </Button>
-        </div>
+        <ResourceLinksSection
+          resourceLinks={resourceLinks}
+          updateResourceLink={updateResourceLink}
+          removeResourceLink={removeResourceLink}
+          addResourceLink={addResourceLink}
+        />
 
         <div className="flex space-x-2">
           <Button type="submit" className="bg-[#F2FCE2] hover:bg-[#E5DEFF] text-black">
