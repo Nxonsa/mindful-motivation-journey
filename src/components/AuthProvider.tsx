@@ -72,6 +72,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           title: "Profile Updated",
           description: "Your profile has been updated successfully.",
         });
+      } else if (event === 'USER_DELETED') {
+        toast({
+          title: "Account Deleted",
+          description: "Your account has been successfully deleted.",
+        });
       }
       
       setIsLoading(false);
@@ -79,6 +84,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const handleAuthError = (error: any) => {
+    console.error('Auth error:', error);
+    
+    // Parse error message from response body if available
+    let errorMessage = error.message;
+    try {
+      if (error.body) {
+        const bodyError = JSON.parse(error.body);
+        errorMessage = bodyError.message;
+      }
+    } catch (e) {
+      console.error('Error parsing error body:', e);
+    }
+
+    // Handle specific error cases
+    if (errorMessage.includes('invalid_credentials')) {
+      toast({
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
+    } else if (errorMessage.includes('user_already_exists')) {
+      toast({
+        title: "Sign Up Failed",
+        description: "An account with this email already exists. Please try logging in instead.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Authentication Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">
@@ -102,6 +143,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           theme="light"
           providers={[]}
           redirectTo={window.location.origin}
+          onError={handleAuthError}
         />
       </div>
     );
