@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Play, CheckCircle, Dumbbell, Running, Heart } from "lucide-react";
+import { Play, CheckCircle, Dumbbell, Activity, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import AnimatedProgressBar from "@/components/AnimatedProgressBar";
@@ -40,7 +40,7 @@ const Training = () => {
         instructions: "Start slow and gradually increase your pace. Listen to your body.",
         contribution: 50,
         experiencePoints: 100 + (level * 20),
-        icon: Running
+        icon: Activity // Changed from Running to Activity
       },
       {
         id: "pushups",
