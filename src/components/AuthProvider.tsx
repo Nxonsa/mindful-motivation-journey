@@ -72,11 +72,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           title: "Profile Updated",
           description: "Your profile has been updated successfully.",
         });
-      } else if (event === 'USER_DELETED') {
-        toast({
-          title: "Account Deleted",
-          description: "Your account has been successfully deleted.",
-        });
       }
       
       setIsLoading(false);
@@ -85,14 +80,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleAuthError = (error: any) => {
+  const handleError = (error: Error | null) => {
+    if (!error) return;
+    
     console.error('Auth error:', error);
     
     // Parse error message from response body if available
     let errorMessage = error.message;
     try {
-      if (error.body) {
-        const bodyError = JSON.parse(error.body);
+      if ('body' in error && typeof (error as any).body === 'string') {
+        const bodyError = JSON.parse((error as any).body);
         errorMessage = bodyError.message;
       }
     } catch (e) {
@@ -143,7 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           theme="light"
           providers={[]}
           redirectTo={window.location.origin}
-          onError={handleAuthError}
+          onAuthError={handleError}
         />
       </div>
     );
